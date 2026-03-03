@@ -6,10 +6,7 @@ SHEET_ID = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
 st.set_page_config(page_title="현장 MSDS 통합검색", layout="wide")
-
-# 타이틀 부분
 st.title("🚢 현장 MSDS 통합 검색 시스템")
-st.info("💡 아래 MSDS 명칭(파란색 글자)을 누르면 원본 파일이 바로 열립니다.")
 
 try:
     @st.cache_data(ttl=1)
@@ -21,32 +18,43 @@ try:
     df = load_data()
 
     # 검색창
-    search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 색인 등)", "")
+    search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 등)", "")
 
     # 검색 필터링
     if search:
         mask = df.apply(lambda row: row.astype(str).str.contains(search, case=False).any(), axis=1)
-        display_df = df[mask]
+        display_df = df[mask].copy()
     else:
-        display_df = df
+        display_df = df.copy()
 
-    # [핵심] 표 대신 '카드 형태'로 리스트 출력
-    if not display_df.empty:
-        for _, row in display_df.iterrows():
-            # 디자인용 컨테이너 생성
-            with st.container():
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    # 마크다운 방식으로 이름에 링크를 겁니다 (가장 확실한 방법)
-                    st.markdown(f"### [📄 {row['MSDS명']}]({row['링크']})")
-                    st.write(f"**제조사:** {row['Maker']} | **분류:** {row['분류']}")
-                with col2:
-                    if row['비고']:
-                        st.caption(f"📌 **비고**")
-                        st.caption(row['비고'])
-                st.divider() # 구분선
-    else:
-        st.warning("검색 결과가 없습니다.")
+    # [핵심] HTML을 이용해 MSDS명에 클릭 가능한 링크 심기
+    def make_clickable(name, link):
+        # 링크가 있는 경우에만 클릭 가능하게 만듦
+        if link.startswith("http"):
+            return f'<a href="{link}" target="_blank" style="text-decoration: none; color: #007bff; font-weight: bold;">📄 {name}</a>'
+        return name
+
+    # 새로운 '열' 생성 (HTML 링크가 포함된 이름)
+    display_df['MSDS명(클릭)'] = display_df.apply(lambda x: make_clickable(x['MSDS명'], x['링크']), axis=1)
+
+    # 화면에 보여줄 순서와 컬럼 정리
+    result_df = display_df[['순번', '분류', 'MSDS명(클릭)', 'Maker', '비고']]
+
+    # [중요] HTML 표로 출력
+    # st.write 대신 to_html을 사용하여 브라우저가 링크를 직접 인식하게 합니다.
+    st.write(
+        result_df.to_html(escape=False, index=False, justify='center'),
+        unsafe_allow_html=True
+    )
+
+    st.markdown("""
+        <style>
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #f0f2f6; padding: 10px; text-align: center; border: 1px solid #ddd; }
+        td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        tr:hover { background-color: #f5f5f5; }
+        </style>
+    """, unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"데이터 로딩 중 오류 발생: {e}")

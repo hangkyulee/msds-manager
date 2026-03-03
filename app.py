@@ -17,11 +17,6 @@ try:
 
     df = load_data()
 
-    # [핵심 로직] MSDS명 칸에 링크 주소를 덮어씌웁니다.
-    # 이렇게 해야 클릭했을 때 해당 주소로 이동합니다.
-    if 'MSDS명' in df.columns and '링크' in df.columns:
-        df['MSDS명'] = df['링크'] 
-
     # 검색창
     search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 등)", "")
 
@@ -31,20 +26,23 @@ try:
     else:
         display_df = df
 
-    # 표 출력
-    st.data_editor(
+    # [마법의 구간] 표 출력 설정
+    st.dataframe(
         display_df,
         column_config={
             "MSDS명": st.column_config.LinkColumn(
-                "파일 열기 (클릭)",
-                help="주소를 클릭하면 MSDS 파일이 새 창에서 열립니다."
+                "MSDS명 (클릭하면 열림)",
+                # '링크' 컬럼에 있는 주소를 가져와서 'MSDS명' 글자에 연결합니다.
+                url_template=display_df["링크"],
+                display_text=None # 시트의 MSDS명 텍스트를 그대로 사용
             ),
-            "링크": None # 주소 열은 중복이므로 숨깁니다.
+            "링크": None # 원본 주소 칸은 보기 싫으니까 숨깁니다.
         },
         hide_index=True,
-        use_container_width=True,
-        disabled=True
+        use_container_width=True
     )
 
 except Exception as e:
-    st.error(f"오류가 발생했습니다: {e}")
+    # 에러가 날 경우를 대비한 안전 장치 (만약 url_template이 안 먹히는 버전일 때)
+    st.warning("표 형식을 다시 로드합니다...")
+    st.dataframe(display_df, use_container_width=True)

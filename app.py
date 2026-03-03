@@ -5,8 +5,11 @@ import pandas as pd
 SHEET_ID = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-st.set_page_config(page_title="MSDS 통합관리", layout="wide")
+st.set_page_config(page_title="현장 MSDS 통합검색", layout="wide")
+
+# 타이틀 부분
 st.title("🚢 현장 MSDS 통합 검색 시스템")
+st.info("💡 아래 MSDS 명칭(파란색 글자)을 누르면 원본 파일이 바로 열립니다.")
 
 try:
     @st.cache_data(ttl=1)
@@ -18,31 +21,32 @@ try:
     df = load_data()
 
     # 검색창
-    search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 등)", "")
+    search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 색인 등)", "")
 
+    # 검색 필터링
     if search:
         mask = df.apply(lambda row: row.astype(str).str.contains(search, case=False).any(), axis=1)
         display_df = df[mask]
     else:
         display_df = df
 
-    # [마법의 구간] 표 출력 설정
-    st.dataframe(
-        display_df,
-        column_config={
-            "MSDS명": st.column_config.LinkColumn(
-                "MSDS명 (클릭하면 열림)",
-                # '링크' 컬럼에 있는 주소를 가져와서 'MSDS명' 글자에 연결합니다.
-                url_template=display_df["링크"],
-                display_text=None # 시트의 MSDS명 텍스트를 그대로 사용
-            ),
-            "링크": None # 원본 주소 칸은 보기 싫으니까 숨깁니다.
-        },
-        hide_index=True,
-        use_container_width=True
-    )
+    # [핵심] 표 대신 '카드 형태'로 리스트 출력
+    if not display_df.empty:
+        for _, row in display_df.iterrows():
+            # 디자인용 컨테이너 생성
+            with st.container():
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    # 마크다운 방식으로 이름에 링크를 겁니다 (가장 확실한 방법)
+                    st.markdown(f"### [📄 {row['MSDS명']}]({row['링크']})")
+                    st.write(f"**제조사:** {row['Maker']} | **분류:** {row['분류']}")
+                with col2:
+                    if row['비고']:
+                        st.caption(f"📌 **비고**")
+                        st.caption(row['비고'])
+                st.divider() # 구분선
+    else:
+        st.warning("검색 결과가 없습니다.")
 
 except Exception as e:
-    # 에러가 날 경우를 대비한 안전 장치 (만약 url_template이 안 먹히는 버전일 때)
-    st.warning("표 형식을 다시 로드합니다...")
-    st.dataframe(display_df, use_container_width=True)
+    st.error(f"데이터 로딩 중 오류 발생: {e}")

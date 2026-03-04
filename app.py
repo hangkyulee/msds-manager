@@ -5,7 +5,7 @@ st.set_page_config(page_title="의장1부 MSDS 관리 시스템", layout="wide")
 
 # 1. 데이터 불러오기 (본인의 구글 시트 주소로 변경 필수)
 # 시트의 '분류' 열에 아래 버튼 이름들이 정확히 있어야 필터링이 됩니다.
-SHEET_URL = "여기에_본인의_구글_시트_주소를_넣으세요"
+SHEET_URL = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
 CSV_URL = SHEET_URL.replace('/edit#gid=', '/export?format=csv&gid=')
 
 @st.cache_data

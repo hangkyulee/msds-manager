@@ -1,60 +1,90 @@
 import streamlit as st
 import pandas as pd
 
-# 1. 설정 (본인의 시트 ID)
-SHEET_ID = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
-CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+st.set_page_config(page_title="현장 MSDS 관리 시스템", layout="wide")
 
-st.set_page_config(page_title="현장 MSDS 통합검색", layout="wide")
-st.title("🚢 현장 MSDS 통합 검색 시스템")
+# 1. 데이터 불러오기 (본인의 구글 시트 주소로 변경 필수)
+# 시트의 '분류' 열에 아래 버튼 이름들이 정확히 있어야 필터링이 됩니다.
+SHEET_URL = "여기에_본인의_구글_시트_주소를_넣으세요"
+CSV_URL = SHEET_URL.replace('/edit#gid=', '/export?format=csv&gid=')
 
-try:
-    @st.cache_data(ttl=1)
-    def load_data():
+@st.cache_data
+def load_data():
+    try:
+        # 데이터 로드 후 공백 제거 등 전처리
         data = pd.read_csv(CSV_URL)
-        data.columns = [col.strip() for col in data.columns]
-        return data.fillna("")
+        return data
+    except:
+        return pd.DataFrame(columns=["분류", "MSDS명", "Maker", "링크", "비고"])
 
-    df = load_data()
+df = load_data()
 
-    # 검색창
-    search = st.text_input("🔍 검색어를 입력하세요 (물질명, 제조사, 비고 등)", "")
+# --- 상단 타이틀 ---
+st.title("🚢 MSDS 통합 검색 시스템")
+st.write("카테고리를 선택하거나 검색창을 이용해 주세요.")
 
-    # 검색 필터링
-    if search:
-        mask = df.apply(lambda row: row.astype(str).str.contains(search, case=False).any(), axis=1)
-        display_df = df[mask].copy()
-    else:
-        display_df = df.copy()
+# --- 7대 대분류 버튼 (모바일 앱 스타일) ---
+st.subheader("📁 카테고리별 보기")
 
-    # [핵심] HTML을 이용해 MSDS명에 클릭 가능한 링크 심기
-    def make_clickable(name, link):
-        # 링크가 있는 경우에만 클릭 가능하게 만듦
-        if link.startswith("http"):
-            return f'<a href="{link}" target="_blank" style="text-decoration: none; color: #007bff; font-weight: bold;">📄 {name}</a>'
-        return name
+# 버튼 배치를 위해 4열 구성 (첫 줄 4개, 둘째 줄 3개)
+row1_col1, row1_col2, row1_col3, row1_col4 = st.columns(4)
+row2_col1, row2_col2, row2_col3, row2_col4 = st.columns(4)
 
-    # 새로운 '열' 생성 (HTML 링크가 포함된 이름)
-    display_df['MSDS명(클릭)'] = display_df.apply(lambda x: make_clickable(x['MSDS명'], x['링크']), axis=1)
+category_choice = None
 
-    # 화면에 보여줄 순서와 컬럼 정리
-    result_df = display_df[['순번', '분류', 'MSDS명(클릭)', 'Maker', '비고']]
+# 첫 번째 줄
+with row1_col1:
+    if st.button("🎨\n\n1. 도장재", use_container_width=True):
+        category_choice = "도장재"
+with row1_col2:
+    if st.button("⚡\n\n2. 용접재", use_container_width=True):
+        category_choice = "용접재"
+with row1_col3:
+    if st.button("🛢️\n\n3. 오일,락카", use_container_width=True):
+        category_choice = "오일,락카"
+with row1_col4:
+    if st.button("🧵\n\n4. 섬유", use_container_width=True):
+        category_choice = "섬유"
 
-    # [중요] HTML 표로 출력
-    # st.write 대신 to_html을 사용하여 브라우저가 링크를 직접 인식하게 합니다.
-    st.write(
-        result_df.to_html(escape=False, index=False, justify='center'),
-        unsafe_allow_html=True
-    )
+# 두 번째 줄
+with row2_col1:
+    if st.button("🧱\n\n5. 충진재,경화재", use_container_width=True):
+        category_choice = "충진재,경화재"
+with row2_col2:
+    if st.button("🔥\n\n6. 가스", use_container_width=True):
+        category_choice = "가스"
+with row2_col3:
+    if st.button("📦\n\n7. 기타용품", use_container_width=True):
+        category_choice = "기타용품"
+with row2_col4:
+    if st.button("🔄\n\n전체 초기화", use_container_width=True):
+        category_choice = None
+        st.rerun()
 
-    st.markdown("""
-        <style>
-        table { width: 100%; border-collapse: collapse; }
-        th { background-color: #f0f2f6; padding: 10px; text-align: center; border: 1px solid #ddd; }
-        td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        tr:hover { background-color: #f5f5f5; }
-        </style>
-    """, unsafe_allow_html=True)
+# --- 검색창 ---
+st.divider()
+search_query = st.text_input("🔍 직접 검색 (물질명 또는 제조사 입력)", "")
 
-except Exception as e:
-    st.error(f"데이터 로딩 중 오류 발생: {e}")
+# --- 데이터 필터링 로직 ---
+if category_choice:
+    st.info(f"📍 '{category_choice}' 필터링 결과입니다.")
+    # 시트의 '분류' 열에서 선택한 카테고리와 일치하는 행만 추출
+    filtered_df = df[df['분류'].str.contains(category_choice, na=False)]
+elif search_query:
+    # 검색어 입력 시 이름이나 제조사에서 검색
+    filtered_df = df[df['MSDS명'].str.contains(search_query, na=False) | 
+                     df['Maker'].str.contains(search_query, na=False)]
+else:
+    filtered_df = df
+
+# --- 결과 표 출력 ---
+st.dataframe(
+    filtered_df, 
+    use_container_width=True, 
+    hide_index=True,
+    column_config={
+        "링크": st.column_config.LinkColumn("MSDS 링크") # 링크를 클릭 가능하게 설정
+    }
+)
+
+st.caption("※ 카테고리 버튼을 누르면 해당 품목만 모아서 볼 수 있습니다.")

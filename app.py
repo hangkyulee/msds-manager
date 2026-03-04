@@ -75,14 +75,18 @@ st.dataframe(
     use_container_width=True, 
     hide_index=True,
     column_config={
-        "링크": st.column_config.LinkColumn(
-            "MSDS 열기", 
-            display_text="문서 열기 📄" # 링크 주소 대신 이 글자가 보임
+        "MSDS명": st.column_config.TextColumn(
+            "물질명(MSDS명)", 
+            width="large",  # "small", "medium", "large" 중 선택 가능. 대폭 늘렸습니다.
+            help="물질 이름이 길면 마우스를 올리거나 옆으로 밀어서 확인하세요."
         ),
-        "MSDS명": st.column_config.TextColumn("물질명", width="medium"),
-        "분류": "분류",
-        "Maker": "제조사",
-        "비고": "비고"
+        "링크": st.column_config.LinkColumn(
+            "문서 열기", 
+            display_text="파일 보기 📄" 
+        ),
+        "분류": st.column_config.TextColumn("분류", width="small"),
+        "Maker": st.column_config.TextColumn("제조사", width="medium"),
+        "비고": st.column_config.TextColumn("비고", width="medium")
     }
 )
 

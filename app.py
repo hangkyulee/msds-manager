@@ -82,8 +82,6 @@ else:
     filtered_df = df
 
 # --- 결과 표 출력 ---
-st.write("불러온 데이터 개수:", len(df))
-st.write("시트 컬럼명:", df.columns.tolist())
 st.dataframe(
     filtered_df, 
     use_container_width=True, 

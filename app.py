@@ -23,7 +23,7 @@ df = load_data()
 
 # --- 메인 UI ---
 st.title("🚢 현장 MSDS 통합 검색 시스템")
-st.info("💡 리스트에서 **물질명(MSDS명)**을 클릭하면 해당 파일을 바로 볼 수 있습니다.")
+st.info("💡 **[파일열기]** 아이콘을 클릭하면 MSDS 문서를 바로 확인할 수 있습니다.")
 
 # --- 7대 대분류 버튼 ---
 st.subheader("📁 카테고리별 보기")
@@ -65,29 +65,31 @@ elif search_query:
 else:
     filtered_df = df.copy()
 
-# --- [중요] 링크 연결 로직 ---
-# 'MSDS명'에 링크 주소를 직접 심을 수는 없어서, Streamlit의 LinkColumn 기능을 사용합니다.
-# 링크가 있는 행들만 골라내어 MSDS명 컬럼을 링크형태로 변환합니다.
+# --- [최종 수정] 열 순서와 너비 조정 ---
+# 물질명 바로 다음에 링크 버튼이 오도록 순서를 바꿨습니다.
+display_columns = ["MSDS명", "링크", "Maker", "분류", "비고"]
+final_df = filtered_df[display_columns]
 
 # --- 표 출력 ---
 st.dataframe(
-    filtered_df, 
+    final_df, 
     use_container_width=True, 
     hide_index=True,
     column_config={
         "MSDS명": st.column_config.TextColumn(
-            "물질명(MSDS명)", 
-            width="large",  # "small", "medium", "large" 중 선택 가능. 대폭 늘렸습니다.
-            help="물질 이름이 길면 마우스를 올리거나 옆으로 밀어서 확인하세요."
+            "물질명", 
+            width="large", # 이름을 아주 길게 표시
+            help="클릭은 오른쪽 '파일열기' 아이콘을 이용하세요."
         ),
         "링크": st.column_config.LinkColumn(
-            "문서 열기", 
-            display_text="파일 보기 📄" 
+            "파일열기", 
+            display_text="📄 열기", # 짧고 명확한 아이콘 버튼
+            width="small"
         ),
-        "분류": st.column_config.TextColumn("분류", width="small"),
         "Maker": st.column_config.TextColumn("제조사", width="medium"),
+        "분류": st.column_config.TextColumn("분류", width="small"),
         "비고": st.column_config.TextColumn("비고", width="medium")
     }
 )
 
-st.caption(f"현재 {len(filtered_df)}개의 항목이 표시 중입니다. '문서 열기'를 누르면 파일이 연결됩니다.")
+st.caption(f"현재 {len(filtered_df)}개의 항목이 표시 중입니다.")

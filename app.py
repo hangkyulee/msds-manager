@@ -34,7 +34,7 @@ category_choice = None
 
 # 첫 번째 줄
 with row1_col1:
-    if st.button("🎨\n\n1. 도장재", use_container_width=True):
+    if st.button("🎨\n\n1. Paint", use_container_width=True):
         category_choice = "도장재"
 with row1_col2:
     if st.button("⚡\n\n2. 용접재", use_container_width=True):

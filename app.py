@@ -3,12 +3,12 @@ import pandas as pd
 
 st.set_page_config(page_title="현장 MSDS 관리 시스템", layout="wide")
 
-# 1. 구글 시트 설정 (사용자님의 시트 ID 적용)
+# 1. 구글 시트 설정
 SHEET_ID = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
 # 2. 데이터 불러오기 함수
-@st.cache_data(ttl=60) # 1분마다 새로운 데이터를 읽어오도록 설정
+@st.cache_data(ttl=60)
 def load_data():
     try:
         df = pd.read_csv(SHEET_URL)
@@ -65,9 +65,9 @@ elif search_query:
 else:
     filtered_df = df.copy()
 
-# --- [핵심 수정] 클릭 가능하게 변환 ---
-# 1. '링크' 열에 있는 주소를 'MSDS명' 열에 입혀서 클릭하면 링크가 열리게 함
-# 2. 실제 화면에는 링크 주소 대신 'MSDS명' 텍스트만 보이게 함
+# --- [중요] 링크 연결 로직 ---
+# 'MSDS명'에 링크 주소를 직접 심을 수는 없어서, Streamlit의 LinkColumn 기능을 사용합니다.
+# 링크가 있는 행들만 골라내어 MSDS명 컬럼을 링크형태로 변환합니다.
 
 # --- 표 출력 ---
 st.dataframe(
@@ -75,22 +75,15 @@ st.dataframe(
     use_container_width=True, 
     hide_index=True,
     column_config={
-        "MSDS명": st.column_config.LinkColumn(
-            "MSDS명 (클릭 시 열기)",
-            # 링크 열의 값을 가져와서 연결
-            validate=r"^https?://",
-            display_text=r"^https?://.*" # 정규표현식 대신 아래에서 데이터를 치환하는 방식 사용
+        "링크": st.column_config.LinkColumn(
+            "MSDS 열기", 
+            display_text="문서 열기 📄" # 링크 주소 대신 이 글자가 보임
         ),
-        "링크": None,  # 주소만 적힌 열은 숨김 (깔끔함)
+        "MSDS명": st.column_config.TextColumn("물질명", width="medium"),
         "분류": "분류",
         "Maker": "제조사",
         "비고": "비고"
     }
 )
 
-# 만약 위 설정에서 이름이 주소로 보인다면, 아래 코드로 우회 처리합니다.
-# (Streamlit 최신 버전 권장 방식)
-# filtered_df['파일보기'] = filtered_df['링크']
-# st.dataframe(filtered_df[['분류', 'MSDS명', 'Maker', '파일보기', '비고']], ...)
-
-st.caption(f"현재 {len(filtered_df)}개의 항목이 표시 중입니다.")
+st.caption(f"현재 {len(filtered_df)}개의 항목이 표시 중입니다. '문서 열기'를 누르면 파일이 연결됩니다.")

@@ -50,9 +50,15 @@ search_query = st.text_input("🔍 직접 검색 (물질명 또는 제조사)", 
 
 # --- 데이터 필터링 ---
 if category_choice:
+    # 카테고리 버튼 클릭 시 해당 분류만 필터링
     filtered_df = df[df['분류'].str.contains(category_choice, na=False)]
 elif search_query:
-    filtered_df = df[df['MSDS명'].str.contains(search_query, case=False) | df['Maker'].str.contains(search_query, case=False)]
+    # 검색창 입력 시: MSDS명 OR 제조사(Maker) OR 비고 컬럼에서 검색
+    filtered_df = df[
+        df['MSDS명'].str.contains(search_query, case=False) | 
+        df['Maker'].str.contains(search_query, case=False) |
+        df['비고'].str.contains(search_query, case=False)  # <-- 이 부분이 추가되었습니다.
+    ]
 else:
     filtered_df = df
 

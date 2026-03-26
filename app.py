@@ -20,7 +20,7 @@ def load_data():
 df = load_data()
 
 # --- 메인 UI ---
-st.title("🚢 의장1부 MSDS 통합 검색 프로그램")
+st.title("🚢 의장1부 MSDS 검색 프로그램")
 st.info("💡 **물질명(이름)**을 터치하면 MSDS 파일이 바로 열립니다.")
 
 # --- 7대 대분류 버튼 ---

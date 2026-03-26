@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="현장 MSDS 관리 시스템", layout="wide")
+st.set_page_config(page_title="의장1부 현장 MSDS 관리 시스템", layout="wide")
 
 # 1. 구글 시트 설정
 SHEET_ID = "1hRu0cQZGIQp4dxEK0HXdIuiJ1abI55SreVR1JZhPmig"
